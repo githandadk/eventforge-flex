@@ -374,27 +374,57 @@ export type Database = {
           },
         ]
       }
+      event_meal_prices: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          meal_type: string
+          price: number
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          meal_type: string
+          price: number
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          meal_type?: string
+          price?: number
+        }
+        Relationships: []
+      }
       event_settings: {
         Row: {
           currency: string
           default_meals_per_day: number
           event_id: string
           notes: Json | null
+          registration_base_fee: number
           room_key_deposit: number
+          shuttle_fee: number
         }
         Insert: {
           currency?: string
           default_meals_per_day?: number
           event_id: string
           notes?: Json | null
+          registration_base_fee?: number
           room_key_deposit?: number
+          shuttle_fee?: number
         }
         Update: {
           currency?: string
           default_meals_per_day?: number
           event_id?: string
           notes?: Json | null
+          registration_base_fee?: number
           room_key_deposit?: number
+          shuttle_fee?: number
         }
         Relationships: [
           {
@@ -1049,6 +1079,17 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vw_event_fees_admin: {
+        Row: {
+          amount: number | null
+          category: string | null
+          code: string | null
+          event_id: string | null
+          label: string | null
+          unit: string | null
+        }
+        Relationships: []
       }
     }
     Functions: {
