@@ -36,7 +36,7 @@ export const useEvents = () => {
 
 export const useEvent = (id: string) => {
   return useQuery({
-    queryKey: ["event", id],
+    queryKey: ["event", id, "v2"], // Updated to force cache refresh
     queryFn: async () => {
       const { data, error } = await supabase
         .from("events")
