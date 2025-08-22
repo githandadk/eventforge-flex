@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useEvent } from "@/hooks/useEvents";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,10 +30,16 @@ const eventFormSchema = z
     name: z.string().min(1, "Event name is required"),
     description: z.string().optional(),
     location: z.string().optional(),
+    slug: z.string().optional(),
+    timezone: z.string().optional(),
+    currency: z.string().optional(),
     start_date: z.date({ required_error: "Start date is required" }),
     end_date: z.date({ required_error: "End date is required" }),
     reg_open: z.date().optional(),
     reg_close: z.date().optional(),
+    lodging_option: z.boolean(),
+    meal_option: z.boolean(),
+    shuttle_option: z.boolean(),
   })
   .refine((data) => isAfter(data.end_date, data.start_date), {
     message: "End date must be after start date",
@@ -57,6 +64,11 @@ export default function AdminEventForm() {
     formState: { errors, isSubmitting },
   } = useForm<EventFormData>({
     resolver: zodResolver(eventFormSchema),
+    defaultValues: {
+      lodging_option: false,
+      meal_option: false,
+      shuttle_option: false,
+    },
   });
 
   useEffect(() => {
@@ -65,10 +77,16 @@ export default function AdminEventForm() {
         name: event.name,
         description: event.description || "",
         location: event.location || "",
+        slug: event.slug || "",
+        timezone: event.timezone || "",
+        currency: event.currency || "",
         start_date: new Date(event.start_date),
         end_date: new Date(event.end_date),
         reg_open: event.reg_open ? new Date(event.reg_open) : undefined,
         reg_close: event.reg_close ? new Date(event.reg_close) : undefined,
+        lodging_option: event.lodging_option ?? false,
+        meal_option: event.meal_option ?? false,
+        shuttle_option: event.shuttle_option ?? false,
       });
     }
   }, [event, isEditing, reset]);
@@ -79,11 +97,18 @@ export default function AdminEventForm() {
         name: data.name,
         description: data.description,
         location: data.location,
+        slug:
+          data.slug ||
+          data.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
+        timezone: data.timezone,
+        currency: data.currency,
+        lodging_option: data.lodging_option,
+        meal_option: data.meal_option,
+        shuttle_option: data.shuttle_option,
         start_date: format(data.start_date, "yyyy-MM-dd"),
         end_date: format(data.end_date, "yyyy-MM-dd"),
         reg_open: data.reg_open ? data.reg_open.toISOString() : null,
         reg_close: data.reg_close ? data.reg_close.toISOString() : null,
-        slug: data.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
       };
 
       if (isEditing) {
@@ -159,6 +184,17 @@ export default function AdminEventForm() {
                   </div>
 
                   <div className="space-y-2">
+                    <Label htmlFor="slug">Slug</Label>
+                    <Input
+                      id="slug"
+                      {...register("slug")}
+                      placeholder="event-slug"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
                     <Label htmlFor="location">Location</Label>
                     <Input
                       id="location"
@@ -166,6 +202,24 @@ export default function AdminEventForm() {
                       placeholder="Enter event location"
                     />
                   </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="timezone">Timezone</Label>
+                    <Input
+                      id="timezone"
+                      {...register("timezone")}
+                      placeholder="e.g. America/New_York"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="currency">Currency</Label>
+                  <Input
+                    id="currency"
+                    {...register("currency")}
+                    placeholder="e.g. USD"
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -314,6 +368,51 @@ export default function AdminEventForm() {
                       )}
                     />
                   </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-3">
+                  <Controller
+                    name="lodging_option"
+                    control={control}
+                    render={({ field }) => (
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="lodging_option"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                        <Label htmlFor="lodging_option">Lodging Option</Label>
+                      </div>
+                    )}
+                  />
+                  <Controller
+                    name="meal_option"
+                    control={control}
+                    render={({ field }) => (
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="meal_option"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                        <Label htmlFor="meal_option">Meal Option</Label>
+                      </div>
+                    )}
+                  />
+                  <Controller
+                    name="shuttle_option"
+                    control={control}
+                    render={({ field }) => (
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="shuttle_option"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                        <Label htmlFor="shuttle_option">Shuttle Option</Label>
+                      </div>
+                    )}
+                  />
                 </div>
 
                 <div className="flex gap-4 pt-6">
