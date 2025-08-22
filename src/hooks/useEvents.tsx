@@ -42,10 +42,8 @@ export const useEvent = (id: string) => {
         .from("events")
         .select(`
           *,
-          event_settings(*),
           lodging_options(*),
-          event_discounts(*),
-          event_department_surcharges(*)
+          event_discounts(*)
         `)
         .eq("id", id)
         .single();
