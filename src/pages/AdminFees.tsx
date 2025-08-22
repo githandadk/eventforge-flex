@@ -82,67 +82,9 @@ export default function AdminFees() {
 
   const handleSaveFee = async (fee: any) => {
     try {
-      const newAmount = parseFloat(editedAmount);
-      if (isNaN(newAmount)) {
-        toast({
-          title: "Invalid amount",
-          description: "Please enter a valid number",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Update the appropriate table based on category
-      let updatePromise;
-      
-      if (fee.category === 'meal') {
-        updatePromise = supabase
-          .from('event_meal_prices')
-          .update({ price: newAmount })
-          .eq('event_id', selectedEventId)
-          .eq('meal_type', fee.code);
-      } else if (fee.category === 'lodging') {
-        updatePromise = supabase
-          .from('lodging_options')
-          .update({ nightly_rate: newAmount })
-          .eq('event_id', selectedEventId)
-          .eq('name', fee.label);
-      } else {
-        // Update event_settings for other fees
-        const settingField = fee.category === 'registration' ? 'registration_base_fee' :
-                           fee.category === 'deposit' ? 'room_key_deposit' :
-                           fee.category === 'shuttle' ? 'shuttle_fee' : null;
-        
-        if (settingField) {
-          updatePromise = supabase
-            .from('event_settings')
-            .update({ [settingField]: newAmount })
-            .eq('event_id', selectedEventId);
-        } else if (fee.category === 'department_surcharge') {
-          updatePromise = supabase
-            .from('event_department_surcharges')
-            .update({ surcharge: newAmount })
-            .eq('event_id', selectedEventId)
-            .eq('department_code', fee.code);
-        }
-      }
-
-      if (updatePromise) {
-        const { error } = await updatePromise;
-        if (error) throw error;
-        
-        toast({
-          title: "Fee updated successfully",
-          description: `${fee.label} has been updated to $${newAmount}`,
-        });
-        
-        await refetchFees();
-      }
-    } catch (error: any) {
       toast({
-        title: "Error updating fee",
-        description: error.message,
-        variant: "destructive",
+        title: "Feature not available",
+        description: "Fee editing has been simplified in the new data model. Please update event options in Event Details instead.",
       });
     } finally {
       setEditingFee(null);
