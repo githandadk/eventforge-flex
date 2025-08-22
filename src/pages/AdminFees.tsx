@@ -1,13 +1,18 @@
 import { useState } from "react";
 import Layout from "@/components/ui/layout";
+import { AdminGuard } from "@/components/admin/AdminGuard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useEvents } from "@/hooks/useEvents";
 import { useEventFees } from "@/hooks/useEventFees";
-import { DollarSign, Settings, Users, Car, Home, Key, Utensils } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { DollarSign, Settings, Users, Car, Home, Key, Utensils, Edit, Save, X } from "lucide-react";
 
 const getCategoryIcon = (category: string) => {
   switch (category) {
@@ -49,13 +54,12 @@ const getCategoryColor = (category: string) => {
 
 export default function AdminFees() {
   const [selectedEventId, setSelectedEventId] = useState<string>("");
+  const [editingFee, setEditingFee] = useState<string | null>(null);
+  const [editedAmount, setEditedAmount] = useState<string>("");
+  const { toast } = useToast();
   
   const { data: events, isLoading: eventsLoading, error: eventsError } = useEvents();
-  const { data: fees, isLoading: feesLoading, error: feesError } = useEventFees(selectedEventId);
-
-  // Debug logging
-  console.log("Events:", { events, eventsLoading, eventsError });
-  console.log("Fees:", { fees, feesLoading, feesError, selectedEventId });
+  const { data: fees, isLoading: feesLoading, error: feesError, refetch: refetchFees } = useEventFees(selectedEventId);
 
   const selectedEvent = events?.find(e => e.id === selectedEventId);
 
@@ -67,6 +71,86 @@ export default function AdminFees() {
     acc[fee.category].push(fee);
     return acc;
   }, {} as Record<string, typeof fees>) || {};
+
+  const handleEditFee = (feeId: string, currentAmount: number) => {
+    setEditingFee(feeId);
+    setEditedAmount(currentAmount.toString());
+  };
+
+  const handleSaveFee = async (fee: any) => {
+    try {
+      const newAmount = parseFloat(editedAmount);
+      if (isNaN(newAmount)) {
+        toast({
+          title: "Invalid amount",
+          description: "Please enter a valid number",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update the appropriate table based on category
+      let updatePromise;
+      
+      if (fee.category === 'meal') {
+        updatePromise = supabase
+          .from('event_meal_prices')
+          .update({ price: newAmount })
+          .eq('event_id', selectedEventId)
+          .eq('meal_type', fee.code);
+      } else if (fee.category === 'lodging') {
+        updatePromise = supabase
+          .from('lodging_options')
+          .update({ nightly_rate: newAmount })
+          .eq('event_id', selectedEventId)
+          .eq('name', fee.label);
+      } else {
+        // Update event_settings for other fees
+        const settingField = fee.category === 'registration' ? 'registration_base_fee' :
+                           fee.category === 'deposit' ? 'room_key_deposit' :
+                           fee.category === 'shuttle' ? 'shuttle_fee' : null;
+        
+        if (settingField) {
+          updatePromise = supabase
+            .from('event_settings')
+            .update({ [settingField]: newAmount })
+            .eq('event_id', selectedEventId);
+        } else if (fee.category === 'department_surcharge') {
+          updatePromise = supabase
+            .from('event_department_surcharges')
+            .update({ surcharge: newAmount })
+            .eq('event_id', selectedEventId)
+            .eq('department_code', fee.code);
+        }
+      }
+
+      if (updatePromise) {
+        const { error } = await updatePromise;
+        if (error) throw error;
+        
+        toast({
+          title: "Fee updated successfully",
+          description: `${fee.label} has been updated to $${newAmount}`,
+        });
+        
+        await refetchFees();
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error updating fee",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setEditingFee(null);
+      setEditedAmount("");
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingFee(null);
+    setEditedAmount("");
+  };
 
   // Show errors if they exist
   if (eventsError) {
@@ -86,32 +170,18 @@ export default function AdminFees() {
   }
 
   return (
-    <Layout>
-      <div className="min-h-screen bg-background p-6">
-        <div className="mx-auto max-w-7xl space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">Event Fees Management</h1>
-              <p className="text-muted-foreground mt-2">
-                View and manage all pricing for events
-              </p>
+    <AdminGuard>
+      <Layout>
+        <div className="min-h-screen bg-background p-6">
+          <div className="mx-auto max-w-7xl space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">Event Fees Management</h1>
+                <p className="text-muted-foreground mt-2">
+                  View and manage all pricing for events
+                </p>
+              </div>
             </div>
-          </div>
-
-          {/* Debug info */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Debug Info</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Events loading: {eventsLoading.toString()}</p>
-              <p>Events count: {events?.length || 0}</p>
-              <p>Selected event ID: {selectedEventId || "none"}</p>
-              <p>Fees loading: {feesLoading.toString()}</p>
-              <p>Fees count: {fees?.length || 0}</p>
-              {feesError && <p className="text-red-600">Fees error: {feesError.message}</p>}
-            </CardContent>
-          </Card>
 
           <Card>
             <CardHeader>
@@ -185,20 +255,62 @@ export default function AdminFees() {
                           </TableHeader>
                           <TableBody>
                             {categoryFees.map((fee, index) => (
-                              <TableRow key={`${fee.category}-${fee.code}-${index}`}>
-                                <TableCell>
-                                  <code className="rounded bg-muted px-2 py-1 text-sm">
-                                    {fee.code}
-                                  </code>
-                                </TableCell>
-                                <TableCell>{fee.label}</TableCell>
-                                <TableCell>
-                                  <Badge variant="outline">per {fee.unit}</Badge>
-                                </TableCell>
-                                <TableCell className="text-right font-mono text-lg">
-                                  ${fee.amount.toFixed(2)}
-                                </TableCell>
-                              </TableRow>
+                            <TableRow key={`${fee.category}-${fee.code}-${index}`}>
+                              <TableCell>
+                                <code className="rounded bg-muted px-2 py-1 text-sm">
+                                  {fee.code}
+                                </code>
+                              </TableCell>
+                              <TableCell>{fee.label}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline">per {fee.unit}</Badge>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  {editingFee === `${fee.category}-${fee.code}` ? (
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-lg">$</span>
+                                      <Input
+                                        type="number"
+                                        value={editedAmount}
+                                        onChange={(e) => setEditedAmount(e.target.value)}
+                                        className="w-24 text-right"
+                                        step="0.01"
+                                      />
+                                      <Button
+                                        size="sm"
+                                        onClick={() => handleSaveFee(fee)}
+                                        className="gap-1"
+                                      >
+                                        <Save className="h-3 w-3" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={handleCancelEdit}
+                                        className="gap-1"
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-mono text-lg">
+                                        ${fee.amount.toFixed(2)}
+                                      </span>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => handleEditFee(`${fee.category}-${fee.code}`, fee.amount)}
+                                        className="gap-1"
+                                      >
+                                        <Edit className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  )}
+                                </div>
+                              </TableCell>
+                            </TableRow>
                             ))}
                           </TableBody>
                         </Table>
@@ -217,8 +329,9 @@ export default function AdminFees() {
               </CardContent>
             </Card>
           )}
+          </div>
         </div>
-      </div>
-    </Layout>
+      </Layout>
+    </AdminGuard>
   );
 }
