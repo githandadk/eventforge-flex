@@ -68,6 +68,7 @@ export type Database = {
           profile_id: string | null
           qr_code_uid: string
           registration_id: string
+          role: string
           ticket_status: string
           wants_meals: boolean
         }
@@ -85,6 +86,7 @@ export type Database = {
           profile_id?: string | null
           qr_code_uid: string
           registration_id: string
+          role?: string
           ticket_status?: string
           wants_meals?: boolean
         }
@@ -102,6 +104,7 @@ export type Database = {
           profile_id?: string | null
           qr_code_uid?: string
           registration_id?: string
+          role?: string
           ticket_status?: string
           wants_meals?: boolean
         }
