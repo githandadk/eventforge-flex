@@ -13,6 +13,10 @@ export interface Event {
   slug: string;
   timezone: string;
   created_at: string;
+  currency: string;
+  lodging_option: boolean;
+  meal_option: boolean;
+  shuttle_option: boolean;
 }
 
 export const useEvents = () => {
