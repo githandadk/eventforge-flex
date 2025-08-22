@@ -50,8 +50,12 @@ const getCategoryColor = (category: string) => {
 export default function AdminFees() {
   const [selectedEventId, setSelectedEventId] = useState<string>("");
   
-  const { data: events, isLoading: eventsLoading } = useEvents();
-  const { data: fees, isLoading: feesLoading } = useEventFees(selectedEventId);
+  const { data: events, isLoading: eventsLoading, error: eventsError } = useEvents();
+  const { data: fees, isLoading: feesLoading, error: feesError } = useEventFees(selectedEventId);
+
+  // Debug logging
+  console.log("Events:", { events, eventsLoading, eventsError });
+  console.log("Fees:", { fees, feesLoading, feesError, selectedEventId });
 
   const selectedEvent = events?.find(e => e.id === selectedEventId);
 
@@ -63,6 +67,23 @@ export default function AdminFees() {
     acc[fee.category].push(fee);
     return acc;
   }, {} as Record<string, typeof fees>) || {};
+
+  // Show errors if they exist
+  if (eventsError) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-background p-6">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center text-red-600">
+                <p>Error loading events: {eventsError.message || "Unknown error"}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -76,6 +97,21 @@ export default function AdminFees() {
               </p>
             </div>
           </div>
+
+          {/* Debug info */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Debug Info</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Events loading: {eventsLoading.toString()}</p>
+              <p>Events count: {events?.length || 0}</p>
+              <p>Selected event ID: {selectedEventId || "none"}</p>
+              <p>Fees loading: {feesLoading.toString()}</p>
+              <p>Fees count: {fees?.length || 0}</p>
+              {feesError && <p className="text-red-600">Fees error: {feesError.message}</p>}
+            </CardContent>
+          </Card>
 
           <Card>
             <CardHeader>
@@ -91,13 +127,15 @@ export default function AdminFees() {
                 </SelectTrigger>
                 <SelectContent>
                   {eventsLoading ? (
-                    <SelectItem value="" disabled>Loading events...</SelectItem>
-                  ) : (
-                    events?.map((event) => (
+                    <SelectItem value="loading" disabled>Loading events...</SelectItem>
+                  ) : events && events.length > 0 ? (
+                    events.map((event) => (
                       <SelectItem key={event.id} value={event.id}>
                         {event.name}
                       </SelectItem>
                     ))
+                  ) : (
+                    <SelectItem value="no-events" disabled>No events found</SelectItem>
                   )}
                 </SelectContent>
               </Select>
