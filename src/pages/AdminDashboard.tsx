@@ -6,17 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useEvents } from "@/hooks/useEvents";
-import { 
-  Calendar, 
-  DollarSign, 
-  Plus, 
-  Settings, 
-  Users, 
+import {
+  Calendar,
+  DollarSign,
+  Plus,
+  Users,
   FileText,
   MapPin,
   Clock
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function AdminDashboard() {
   const [selectedEventId, setSelectedEventId] = useState<string>("");
@@ -28,36 +27,28 @@ export default function AdminDashboard() {
   const dashboardCards = [
     {
       title: "Event Details",
-      description: "Manage event information, dates, and settings",
+      description: "Manage core event information",
       icon: <FileText className="h-5 w-5" />,
-      action: () => selectedEventId ? navigate(`/admin/events/${selectedEventId}`) : null,
+      action: () => (selectedEventId ? navigate(`/admin/events/${selectedEventId}`) : null),
       disabled: !selectedEventId,
-      color: "bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400"
+      color: "bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400",
     },
     {
       title: "Event Fees",
       description: "Configure pricing, registration fees, and discounts",
       icon: <DollarSign className="h-5 w-5" />,
-      action: () => navigate("/admin/fees"),
-      disabled: false,
-      color: "bg-green-50 text-green-600 dark:bg-green-950 dark:text-green-400"
+      action: () => (selectedEventId ? navigate(`/admin/fees?event=${selectedEventId}`) : null),
+      disabled: !selectedEventId,
+      color: "bg-green-50 text-green-600 dark:bg-green-950 dark:text-green-400",
     },
     {
       title: "Registrations",
       description: "View and manage event registrations",
       icon: <Users className="h-5 w-5" />,
-      action: () => selectedEventId ? navigate(`/admin/registrations/${selectedEventId}`) : null,
+      action: () => (selectedEventId ? navigate(`/admin/registrations/${selectedEventId}`) : null),
       disabled: !selectedEventId,
-      color: "bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-400"
+      color: "bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-400",
     },
-    {
-      title: "Event Settings",
-      description: "Configure advanced event options and preferences",
-      icon: <Settings className="h-5 w-5" />,
-      action: () => selectedEventId ? navigate(`/admin/events/${selectedEventId}/settings`) : null,
-      disabled: !selectedEventId,
-      color: "bg-orange-50 text-orange-600 dark:bg-orange-950 dark:text-orange-400"
-    }
   ];
 
   return (
