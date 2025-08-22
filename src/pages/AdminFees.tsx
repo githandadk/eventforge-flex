@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import Layout from "@/components/ui/layout";
 import { AdminGuard } from "@/components/admin/AdminGuard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,7 +54,9 @@ const getCategoryColor = (category: string) => {
 };
 
 export default function AdminFees() {
-  const [selectedEventId, setSelectedEventId] = useState<string>("");
+  const [searchParams] = useSearchParams();
+  const initialEventId = searchParams.get("event") || "";
+  const [selectedEventId, setSelectedEventId] = useState<string>(initialEventId);
   const [editingFee, setEditingFee] = useState<string | null>(null);
   const [editedAmount, setEditedAmount] = useState<string>("");
   const { toast } = useToast();
