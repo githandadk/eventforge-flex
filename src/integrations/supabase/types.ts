@@ -341,6 +341,42 @@ export type Database = {
           },
         ]
       }
+      event_fees: {
+        Row: {
+          amount: number
+          category: string
+          code: string
+          created_at: string
+          event_id: string
+          id: string
+          label: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          category: string
+          code: string
+          created_at?: string
+          event_id: string
+          id?: string
+          label: string
+          unit: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          code?: string
+          created_at?: string
+          event_id?: string
+          id?: string
+          label?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           created_at: string
