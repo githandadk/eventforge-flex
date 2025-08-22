@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import EventDetail from "./pages/EventDetail";
 import Registration from "./pages/Registration";
 import EventRegistration from "./pages/EventRegistration";
+import AdminFees from "./pages/AdminFees";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -24,6 +25,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/events/:id" element={<EventDetail />} />
             <Route path="/events/:id/register" element={<EventRegistration />} />
+            <Route path="/admin/fees" element={<AdminFees />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Login />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
