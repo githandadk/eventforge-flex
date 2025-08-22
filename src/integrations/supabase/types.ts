@@ -276,39 +276,6 @@ export type Database = {
         }
         Relationships: []
       }
-      event_department_surcharges: {
-        Row: {
-          department_code: string
-          event_id: string
-          surcharge: number
-        }
-        Insert: {
-          department_code: string
-          event_id: string
-          surcharge?: number
-        }
-        Update: {
-          department_code?: string
-          event_id?: string
-          surcharge?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "event_department_surcharges_department_code_fkey"
-            columns: ["department_code"]
-            isOneToOne: false
-            referencedRelation: "departments"
-            referencedColumns: ["code"]
-          },
-          {
-            foreignKeyName: "event_department_surcharges_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       event_discounts: {
         Row: {
           bulk_rate_multiplier: number | null
@@ -374,104 +341,54 @@ export type Database = {
           },
         ]
       }
-      event_meal_prices: {
-        Row: {
-          created_at: string
-          event_id: string
-          id: string
-          meal_type: string
-          price: number
-        }
-        Insert: {
-          created_at?: string
-          event_id: string
-          id?: string
-          meal_type: string
-          price: number
-        }
-        Update: {
-          created_at?: string
-          event_id?: string
-          id?: string
-          meal_type?: string
-          price?: number
-        }
-        Relationships: []
-      }
-      event_settings: {
-        Row: {
-          currency: string
-          default_meals_per_day: number
-          event_id: string
-          notes: Json | null
-          registration_base_fee: number
-          room_key_deposit: number
-          shuttle_fee: number
-        }
-        Insert: {
-          currency?: string
-          default_meals_per_day?: number
-          event_id: string
-          notes?: Json | null
-          registration_base_fee?: number
-          room_key_deposit?: number
-          shuttle_fee?: number
-        }
-        Update: {
-          currency?: string
-          default_meals_per_day?: number
-          event_id?: string
-          notes?: Json | null
-          registration_base_fee?: number
-          room_key_deposit?: number
-          shuttle_fee?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "event_settings_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: true
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       events: {
         Row: {
           created_at: string
+          currency: string
           description: string | null
           end_date: string
           id: string
           location: string | null
+          lodging_option: boolean
+          meal_option: boolean
           name: string
           reg_close: string | null
           reg_open: string | null
+          shuttle_option: boolean
           slug: string
           start_date: string
           timezone: string
         }
         Insert: {
           created_at?: string
+          currency?: string
           description?: string | null
           end_date: string
           id?: string
           location?: string | null
+          lodging_option?: boolean
+          meal_option?: boolean
           name: string
           reg_close?: string | null
           reg_open?: string | null
+          shuttle_option?: boolean
           slug: string
           start_date: string
           timezone?: string
         }
         Update: {
           created_at?: string
+          currency?: string
           description?: string | null
           end_date?: string
           id?: string
           location?: string | null
+          lodging_option?: boolean
+          meal_option?: boolean
           name?: string
           reg_close?: string | null
           reg_open?: string | null
+          shuttle_option?: boolean
           slug?: string
           start_date?: string
           timezone?: string
@@ -1079,17 +996,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      vw_event_fees_admin: {
-        Row: {
-          amount: number | null
-          category: string | null
-          code: string | null
-          event_id: string | null
-          label: string | null
-          unit: string | null
-        }
-        Relationships: []
       }
     }
     Functions: {
