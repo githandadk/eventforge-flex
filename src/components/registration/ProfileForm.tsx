@@ -1,10 +1,17 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { useUpdateProfile, Profile } from "@/hooks/useProfile";
 import { useToast } from "@/hooks/use-toast";
 
@@ -13,15 +20,12 @@ const profileSchema = z.object({
   first_name: z.string().optional(),
   last_name: z.string().optional(),
   phone: z.string().optional(),
-  age_years: z
-    .preprocess(
-      (v) => (v === "" || v === undefined ? undefined : Number(v)),
-      z.number().int().positive().optional()
-    ),
+  birthdate: z.date().optional(),
   korean_name: z.string().optional(),
+  church: z.string().optional(),
   home_church: z.string().optional(),
-  emergency_contact_name: z.string().optional(),
-  emergency_contact_phone: z.string().optional(),
+  emergency_contact_name: z.string().min(2, "Emergency contact name is required"),
+  emergency_contact_phone: z.string().min(10, "Emergency contact phone is required"),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -42,8 +46,9 @@ export const ProfileForm = ({ profile, onComplete }: ProfileFormProps) => {
       first_name: profile?.first_name || "",
       last_name: profile?.last_name || "",
       phone: profile?.phone || "",
-      age_years: profile?.age_years ?? undefined,
+      birthdate: profile?.birthdate ? new Date(profile.birthdate) : undefined,
       korean_name: profile?.korean_name || "",
+      church: profile?.church || "",
       home_church: profile?.home_church || "",
       emergency_contact_name: profile?.emergency_contact_name || "",
       emergency_contact_phone: profile?.emergency_contact_phone || "",
@@ -55,6 +60,8 @@ export const ProfileForm = ({ profile, onComplete }: ProfileFormProps) => {
       const profileData = {
         ...data,
         full_name: data.full_name, // Ensure full_name is present
+        birthdate: data.birthdate?.toISOString().split('T')[0],
+        age_years: data.birthdate ? new Date().getFullYear() - data.birthdate.getFullYear() : undefined,
       };
 
       await updateProfile.mutateAsync(profileData);
@@ -156,21 +163,55 @@ export const ProfileForm = ({ profile, onComplete }: ProfileFormProps) => {
 
               <FormField
                 control={form.control}
-                name="age_years"
+                name="birthdate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Birth Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) =>
+                            date > new Date() || date < new Date("1900-01-01")
+                          }
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="church"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Age</FormLabel>
+                    <FormLabel>Church</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        min={0}
-                        value={field.value ?? ""}
-                        onChange={(e) =>
-                          field.onChange(
-                            e.target.value ? Number(e.target.value) : undefined
-                          )
-                        }
-                      />
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -196,7 +237,7 @@ export const ProfileForm = ({ profile, onComplete }: ProfileFormProps) => {
                 name="emergency_contact_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Emergency Contact Name</FormLabel>
+                    <FormLabel>Emergency Contact Name *</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -210,7 +251,7 @@ export const ProfileForm = ({ profile, onComplete }: ProfileFormProps) => {
                 name="emergency_contact_phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Emergency Contact Phone</FormLabel>
+                    <FormLabel>Emergency Contact Phone *</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>

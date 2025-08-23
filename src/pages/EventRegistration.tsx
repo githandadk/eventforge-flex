@@ -30,6 +30,7 @@ interface AttendeeData {
   full_name: string;
   email?: string;
   phone?: string;
+  birthdate?: Date;
   department_code: string;
   age_years?: number;
 }
@@ -64,7 +65,7 @@ export default function EventRegistration() {
 
   // Move to room booking if profile is complete
   useEffect(() => {
-    if (currentStep === "profile" && profile?.full_name) {
+    if (currentStep === "profile" && profile?.full_name && profile?.emergency_contact_name) {
       setCurrentStep("room");
     }
   }, [profile, currentStep]);
