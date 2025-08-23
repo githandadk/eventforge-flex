@@ -1,39 +1,27 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarIcon, Plus, Trash2, Users } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { Plus, Trash2, Users } from "lucide-react";
 
 interface Department {
   code: string;
   name: string;
 }
 
-const attendeeSchema = z.object({
-  full_name: z.string().min(2, "Full name is required"),
-  email: z.string().email().optional().or(z.literal("")),
-  phone: z.string().optional(),
-  birthdate: z.date().optional(),
-  department_code: z.string({
-    required_error: "Department is required",
-  }),
-});
-
-type AttendeeFormData = z.infer<typeof attendeeSchema>;
+interface AttendeeFormData {
+  full_name: string;
+  email?: string;
+  phone?: string;
+  age_years?: number;
+  department_code: string;
+}
 
 interface AttendeeFormProps {
   departments: Department[];
   maxAttendees: number;
-  onComplete?: (attendees: (AttendeeFormData & { age_years?: number })[]) => void;
+  onComplete?: (attendees: AttendeeFormData[]) => void;
 }
 
 export const AttendeeForm = ({ departments, maxAttendees, onComplete }: AttendeeFormProps) => {
@@ -42,13 +30,10 @@ export const AttendeeForm = ({ departments, maxAttendees, onComplete }: Attendee
       full_name: "",
       email: "",
       phone: "",
+      age_years: undefined,
       department_code: "",
     }
   ]);
-
-  const form = useForm<AttendeeFormData>({
-    resolver: zodResolver(attendeeSchema),
-  });
 
   const addAttendee = () => {
     if (attendees.length < maxAttendees) {
@@ -56,6 +41,7 @@ export const AttendeeForm = ({ departments, maxAttendees, onComplete }: Attendee
         full_name: "",
         email: "",
         phone: "",
+        age_years: undefined,
         department_code: "",
       }]);
     }
@@ -74,13 +60,7 @@ export const AttendeeForm = ({ departments, maxAttendees, onComplete }: Attendee
   };
 
   const handleSubmit = () => {
-    const processedAttendees = attendees.map(attendee => ({
-      ...attendee,
-      age_years: attendee.birthdate ? 
-        new Date().getFullYear() - attendee.birthdate.getFullYear() : undefined
-    }));
-    
-    onComplete?.(processedAttendees);
+    onComplete?.(attendees);
   };
 
   const isFormValid = attendees.every(attendee => 
@@ -161,37 +141,20 @@ export const AttendeeForm = ({ departments, maxAttendees, onComplete }: Attendee
               </div>
 
               <div>
-                <label className="text-sm font-medium">Birth Date</label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !attendee.birthdate && "text-muted-foreground"
-                      )}
-                    >
-                      {attendee.birthdate ? (
-                        format(attendee.birthdate, "PPP")
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={attendee.birthdate}
-                      onSelect={(date) => updateAttendee(index, "birthdate", date)}
-                      disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
-                      }
-                      initialFocus
-                      className={cn("p-3 pointer-events-auto")}
-                    />
-                  </PopoverContent>
-                </Popover>
+                <label className="text-sm font-medium">Age</label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={attendee.age_years ?? ""}
+                  onChange={(e) =>
+                    updateAttendee(
+                      index,
+                      "age_years",
+                      e.target.value ? Number(e.target.value) : undefined
+                    )
+                  }
+                  placeholder="Enter age (optional)"
+                />
               </div>
             </div>
           </div>
