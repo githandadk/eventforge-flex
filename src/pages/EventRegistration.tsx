@@ -46,7 +46,7 @@ export default function EventRegistration() {
   const [currentStep, setCurrentStep] = useState<RegistrationStep>("profile");
   const [roomBookingData, setRoomBookingData] = useState<RoomBookingData | null>(null);
   const [attendeesData, setAttendeesData] = useState<AttendeeData[]>([]);
-
+  const [saving, setSaving] = useState(false);
   const { data: departments } = useQuery({
     queryKey: ["departments"],
     queryFn: async () => {
@@ -115,6 +115,73 @@ export default function EventRegistration() {
     setCurrentStep("review");
   };
 
+  const completeRegistration = async () => {
+    if (!user) {
+      toast({ variant: "destructive", title: "Please sign in", description: "You need to be logged in to complete registration." });
+      navigate("/login");
+      return;
+    }
+    if (!event || !roomBookingData || attendeesData.length === 0) {
+      toast({ variant: "destructive", title: "Missing information", description: "Please complete room booking and add at least one attendee." });
+      return;
+    }
+    setSaving(true);
+    try {
+      const { data: registration, error: regError } = await supabase
+        .from("registrations")
+        .insert({
+          event_id: event.id,
+          created_by: user.id,
+        })
+        .select()
+        .single();
+      if (regError) throw regError;
+
+      const { data: roomBooking, error: rbError } = await supabase
+        .from("room_bookings")
+        .insert({
+          registration_id: registration.id,
+          event_id: event.id,
+          lodging_option_id: roomBookingData.lodging_option_id,
+          checkin_date: new Date(roomBookingData.checkin_date).toISOString().split("T")[0],
+          checkout_date: new Date(roomBookingData.checkout_date).toISOString().split("T")[0],
+        })
+        .select()
+        .single();
+      if (rbError) throw rbError;
+
+      const attendeeRows = attendeesData.map((a) => ({
+        registration_id: registration.id,
+        event_id: event.id,
+        full_name: a.full_name,
+        email: a.email || null,
+        phone: a.phone || null,
+        department_code: a.department_code,
+        birthdate: a.birthdate ? new Date(a.birthdate).toISOString().split("T")[0] : null,
+        age_years: typeof a.age_years === "number" ? a.age_years : null,
+        qr_code_uid: typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : Math.random().toString(36).slice(2),
+      }));
+
+      const { error: attError } = await supabase.from("attendees").insert(attendeeRows);
+      if (attError) throw attError;
+
+      toast({
+        title: "Registration complete",
+        description: "Your room booking and attendees were saved.",
+      });
+      setCurrentStep("complete");
+    } catch (err: any) {
+      console.error(err);
+      toast({
+        variant: "destructive",
+        title: "Failed to save",
+        description: err?.message ?? "Please try again.",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const renderCurrentStep = () => {
     switch (currentStep) {
       case "profile":
@@ -172,8 +239,8 @@ export default function EventRegistration() {
                 </div>
               )}
 
-              <Button className="w-full" onClick={() => setCurrentStep("complete")}>
-                Complete Registration
+              <Button className="w-full" onClick={completeRegistration} disabled={saving}>
+                {saving ? "Saving..." : "Complete Registration"}
               </Button>
             </CardContent>
           </Card>
