@@ -20,12 +20,11 @@ const profileSchema = z.object({
   first_name: z.string().optional(),
   last_name: z.string().optional(),
   phone: z.string().optional(),
-  birthdate: z.date().optional(),
+  age_years: z.number().min(1, "Age must be at least 1").max(120, "Age must be less than 120").optional(),
   korean_name: z.string().optional(),
-  church: z.string().optional(),
   home_church: z.string().optional(),
-  emergency_contact_name: z.string().min(2, "Emergency contact name is required"),
-  emergency_contact_phone: z.string().min(10, "Emergency contact phone is required"),
+  emergency_contact_name: z.string().optional(),
+  emergency_contact_phone: z.string().optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -46,9 +45,8 @@ export const ProfileForm = ({ profile, onComplete }: ProfileFormProps) => {
       first_name: profile?.first_name || "",
       last_name: profile?.last_name || "",
       phone: profile?.phone || "",
-      birthdate: profile?.birthdate ? new Date(profile.birthdate) : undefined,
+      age_years: profile?.age_years || undefined,
       korean_name: profile?.korean_name || "",
-      church: profile?.church || "",
       home_church: profile?.home_church || "",
       emergency_contact_name: profile?.emergency_contact_name || "",
       emergency_contact_phone: profile?.emergency_contact_phone || "",
@@ -57,26 +55,22 @@ export const ProfileForm = ({ profile, onComplete }: ProfileFormProps) => {
 
   const onSubmit = async (data: ProfileFormData) => {
     try {
-      const profileData = {
+      const profileData: Partial<Profile> & { full_name: string } = {
         ...data,
-        full_name: data.full_name, // Ensure full_name is present
-        birthdate: data.birthdate?.toISOString().split('T')[0],
-        age_years: data.birthdate ? new Date().getFullYear() - data.birthdate.getFullYear() : undefined,
+        full_name: data.full_name,
       };
 
       await updateProfile.mutateAsync(profileData);
-      
       toast({
-        title: "Profile Updated",
-        description: "Your profile has been successfully saved.",
+        title: "Profile updated successfully",
+        description: "Your profile information has been saved.",
       });
-
       onComplete?.();
     } catch (error) {
       console.error("Error updating profile:", error);
       toast({
-        title: "Error",
-        description: "Failed to update profile. Please try again.",
+        title: "Error updating profile",
+        description: "Please try again later.",
         variant: "destructive",
       });
     }
@@ -163,55 +157,18 @@ export const ProfileForm = ({ profile, onComplete }: ProfileFormProps) => {
 
               <FormField
                 control={form.control}
-                name="birthdate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Birth Date</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                          }
-                          initialFocus
-                          className={cn("p-3 pointer-events-auto")}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="church"
+                name="age_years"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Church</FormLabel>
+                    <FormLabel>Age</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input 
+                        type="number" 
+                        min="1" 
+                        max="120"
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -237,7 +194,7 @@ export const ProfileForm = ({ profile, onComplete }: ProfileFormProps) => {
                 name="emergency_contact_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Emergency Contact Name *</FormLabel>
+                    <FormLabel>Emergency Contact Name (Optional)</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -251,7 +208,7 @@ export const ProfileForm = ({ profile, onComplete }: ProfileFormProps) => {
                 name="emergency_contact_phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Emergency Contact Phone *</FormLabel>
+                    <FormLabel>Emergency Contact Phone (Optional)</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>

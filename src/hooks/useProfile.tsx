@@ -12,7 +12,6 @@ export interface Profile {
   birthdate?: string;
   age_years?: number;
   korean_name?: string;
-  church?: string;
   home_church?: string;
   emergency_contact_name?: string;
   emergency_contact_phone?: string;
