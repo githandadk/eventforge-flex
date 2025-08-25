@@ -49,14 +49,36 @@ export const useUpdateProfile = () => {
     mutationFn: async (profileData: Partial<Profile> & { full_name: string }) => {
       if (!user?.id) throw new Error("User not authenticated");
 
+      // Only send columns that exist in the DB schema to avoid 400 errors (e.g., 'church' does not exist)
+      const allowedKeys: (keyof Profile)[] = [
+        "first_name",
+        "last_name",
+        "phone",
+        "birthdate",
+        "age_years",
+        "korean_name",
+        "home_church",
+        "emergency_contact_name",
+        "emergency_contact_phone",
+        "role",
+      ];
+
+      const filteredData = Object.fromEntries(
+        Object.entries(profileData).filter(([key, value]) =>
+          allowedKeys.includes(key as keyof Profile) && value !== undefined
+        )
+      );
+
+      const payload = {
+        user_id: user.id,
+        email: user.email || "",
+        full_name: profileData.full_name,
+        ...(filteredData as Partial<Profile>),
+      };
+
       const { data, error } = await supabase
         .from("profiles")
-        .upsert({
-          user_id: user.id,
-          email: user.email || "",
-          full_name: profileData.full_name,
-          ...profileData,
-        })
+        .upsert(payload)
         .select()
         .single();
 
