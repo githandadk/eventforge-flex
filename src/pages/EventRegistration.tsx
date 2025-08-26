@@ -127,6 +127,7 @@ export default function EventRegistration() {
     }
     setSaving(true);
     try {
+      // 1) Create registration (owner is the current user per RLS)
       const { data: registration, error: regError } = await supabase
         .from("registrations")
         .insert({
@@ -137,6 +138,7 @@ export default function EventRegistration() {
         .single();
       if (regError) throw regError;
 
+      // 2) Create room booking block (1 row per booking)
       const { data: roomBooking, error: rbError } = await supabase
         .from("room_bookings")
         .insert({
@@ -150,6 +152,7 @@ export default function EventRegistration() {
         .single();
       if (rbError) throw rbError;
 
+      // 3) Insert attendees under this registration and event, and return their ids
       const attendeeRows = attendeesData.map((a) => ({
         registration_id: registration.id,
         event_id: event.id,
@@ -162,12 +165,44 @@ export default function EventRegistration() {
         qr_code_uid: typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : Math.random().toString(36).slice(2),
       }));
 
-      const { error: attError } = await supabase.from("attendees").insert(attendeeRows);
+      const { data: insertedAttendees, error: attError } = await supabase
+        .from("attendees")
+        .insert(attendeeRows)
+        .select();
       if (attError) throw attError;
+
+      // 4) Attach attendees as guests to this room booking
+      const guestRows = (insertedAttendees || []).map((a) => ({
+        room_booking_id: roomBooking.id,
+        attendee_id: a.id,
+      }));
+
+      if (guestRows.length > 0) {
+        const { error: guestsError } = await supabase
+          .from("room_booking_guests")
+          .insert(guestRows);
+        if (guestsError) throw guestsError;
+      }
+
+      // 5) Create registration_items for related charges linked to booking (lodging)
+      const LodgingDescription = `Lodging booking (${roomBookingData.numberOfNights} night${roomBookingData.numberOfNights !== 1 ? "s" : ""})`;
+      const { error: itemsError } = await supabase
+        .from("registration_items")
+        .insert({
+          registration_id: registration.id,
+          kind: "lodging",
+          ref_table: "room_bookings",
+          ref_id: roomBooking.id,
+          description: LodgingDescription,
+          unit_price: roomBookingData.totalCost,
+          qty: 1,
+          amount: roomBookingData.totalCost,
+        });
+      if (itemsError) throw itemsError;
 
       toast({
         title: "Registration complete",
-        description: "Your room booking and attendees were saved.",
+        description: "Your room booking, guests, and charges were saved.",
       });
       setCurrentStep("complete");
     } catch (err: any) {
