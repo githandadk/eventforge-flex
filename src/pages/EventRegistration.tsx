@@ -196,7 +196,6 @@ export default function EventRegistration() {
           description: LodgingDescription,
           unit_price: roomBookingData.totalCost,
           qty: 1,
-          amount: roomBookingData.totalCost,
         });
       if (itemsError) throw itemsError;
 
