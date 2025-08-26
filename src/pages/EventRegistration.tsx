@@ -190,7 +190,7 @@ export default function EventRegistration() {
         .from("registration_items")
         .insert({
           registration_id: registration.id,
-          kind: "lodging",
+          kind: "room_night",
           ref_table: "room_bookings",
           ref_id: roomBooking.id,
           description: LodgingDescription,
