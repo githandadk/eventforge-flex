@@ -50,18 +50,17 @@ const Dashboard = () => {
         <div className="relative overflow-hidden rounded-2xl bg-gradient-hero p-8 mb-8 text-primary-foreground">
           <div className="relative z-10">
             <h1 className="text-4xl font-bold mb-4">
-              Discover Amazing Events
+              Manage Korean Camp Meeting Events
             </h1>
             <p className="text-lg opacity-90 mb-6 max-w-2xl">
-              Connect with like-minded professionals, expand your knowledge, and create memorable experiences.
-              Browse our curated selection of conferences, workshops, and networking events.
+              Welcome to the Korean Camp Meeting Event Management Portal. Discover, register, and manage your participation in upcoming Korean Camp Meeting events.
             </p>
             <div className="flex gap-4">
-              <Button size="lg" variant="secondary" className="bg-white/20 hover:bg-white/30 border-white/30">
+              <Button size="lg" variant="secondary" className="bg-white/20 hover:bg-white/80 border-white/30">
                 <Calendar className="w-5 h-5 mr-2" />
                 Browse All Events
               </Button>
-              <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
+              <Button size="lg" variant="secondary" className="bg-white/20 hover:bg-white/80 border-white/30">
                 View My Registrations
               </Button>
             </div>
