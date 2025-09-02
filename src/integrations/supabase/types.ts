@@ -508,7 +508,6 @@ export type Database = {
         Row: {
           age_years: number | null
           birthdate: string | null
-          church: string | null
           email: string
           emergency_contact_name: string | null
           emergency_contact_phone: string | null
@@ -525,7 +524,6 @@ export type Database = {
         Insert: {
           age_years?: number | null
           birthdate?: string | null
-          church?: string | null
           email: string
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
@@ -542,7 +540,6 @@ export type Database = {
         Update: {
           age_years?: number | null
           birthdate?: string | null
-          church?: string | null
           email?: string
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
